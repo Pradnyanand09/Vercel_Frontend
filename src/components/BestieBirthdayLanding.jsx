@@ -2,25 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://my-songs-qjye.vercel.app';
+// Fallback to your deployed backend if VITE_API_URL isn't set in your .env
+const API_URL = import.meta.env.VITE_API_URL || 'https://vercel-backend-blond.vercel.app/';
 
 const BestieBirthdayLanding = () => {
   const [loaded, setLoaded] = useState(false);
   const [showHearts, setShowHearts] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const [showButton, setShowButton] = useState(false);
+
+  // Keep track of window size
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
-  
+
+  // Keep track of songs fetched from the backend
+  const [songs, setSongs] = useState([]);
+
   useEffect(() => {
-    // Create staggered animations
+    // Staggered animations
     const timer1 = setTimeout(() => setLoaded(true), 500);
     const timer2 = setTimeout(() => setShowHearts(true), 1000);
     const timer3 = setTimeout(() => setShowMessage(true), 1500);
     const timer4 = setTimeout(() => setShowButton(true), 2500);
-    
+
     // Handle window resize
     const handleResize = () => {
       setWindowSize({
@@ -28,9 +34,9 @@ const BestieBirthdayLanding = () => {
         height: window.innerHeight,
       });
     };
-    
+
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -39,34 +45,34 @@ const BestieBirthdayLanding = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  
-  // Determine if mobile
+
+  // Determine if mobile or small mobile
   const isMobile = windowSize.width <= 768;
   const isSmallMobile = windowSize.width <= 480;
-  
+
   useEffect(() => {
     const fetchSongs = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/songs`);
         console.log("API response:", res.data);
-        
+
         // Check if notes exist in the data
         const notesPresent = res.data.some(song => song.note);
         console.log("Notes present in data:", notesPresent);
-        
-        // Add isLiked property to songs
-        const songsWithLiked = res.data.map(song => ({ 
-          ...song, 
+
+        // Add isLiked property and ensure note is always a string
+        const songsWithLiked = res.data.map(song => ({
+          ...song,
           isLiked: false,
-          // Ensure note is always a string (fix in case it's null)
-          note: song.note || ""
+          note: song.note || "",
         }));
-        
+
         setSongs(songsWithLiked);
       } catch (error) {
         console.error("Error fetching songs:", error);
       }
     };
+
     fetchSongs();
   }, []);
   
